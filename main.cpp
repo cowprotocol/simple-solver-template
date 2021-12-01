@@ -42,7 +42,7 @@ int main()
         print_token(i);
 
     for (auto &i: orders)
-        print_order(i);
+        print_order(i, tokens);
 
 
     // solve batch auction

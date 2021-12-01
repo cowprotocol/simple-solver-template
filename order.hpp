@@ -4,7 +4,7 @@
 #define ORDER_H
 
 #include <boost/multiprecision/gmp.hpp>
-
+#include "./token.hpp"
 
 
 /***************************** The definition of the class that describes a regular (i.e., trader) order *********************************/
@@ -28,7 +28,7 @@ class Order {
 
 
 // An auxiliary function that prints an order in a readable form.
-void print_order(Order &o);
+void print_order(Order &o, std::vector<Token> &_tokens);
 
 
 
