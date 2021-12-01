@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <boost/multiprecision/gmp.hpp>
+
 #include "./aux.hpp"
 
 
@@ -35,7 +37,12 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, int
         bool t4 = i.value()["is_sell_order"];
         bool t5 = i.value()["is_liquidity_order"];
         bool t6 = i.value()["allow_partial_fill"];
-        orders.push_back(Order(t1,t2,t3,t4,t5,t6));
+        std::string tt7 = i.value()["sell_amount"];
+        boost::multiprecision::mpz_int t7 = static_cast<boost::multiprecision::mpz_int>(tt7);
+        std::string tt8 = i.value()["buy_amount"];
+        boost::multiprecision::mpz_int t8 = static_cast<boost::multiprecision::mpz_int>(tt8);
+
+        orders.push_back(Order(t1,t2,t3,t4,t5,t6,t7,t8));
     }
 
     return;
