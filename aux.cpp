@@ -41,8 +41,14 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, int
         boost::multiprecision::mpz_int t7 = static_cast<boost::multiprecision::mpz_int>(tt7);
         std::string tt8 = i.value()["buy_amount"];
         boost::multiprecision::mpz_int t8 = static_cast<boost::multiprecision::mpz_int>(tt8);
+        int t9 = _idx_tokens.at(i.value()["fee"]["token"]);
+        std::string tt10 = i.value()["fee"]["amount"];
+        boost::multiprecision::mpz_int t10 = static_cast<boost::multiprecision::mpz_int>(tt10);
+        int t11 = _idx_tokens.at(i.value()["cost"]["token"]);
+        std::string tt12 = i.value()["cost"]["amount"];
+        boost::multiprecision::mpz_int t12 = static_cast<boost::multiprecision::mpz_int>(tt12);
 
-        orders.push_back(Order(t1,t2,t3,t4,t5,t6,t7,t8));
+        orders.push_back(Order(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12));
     }
 
     return;
