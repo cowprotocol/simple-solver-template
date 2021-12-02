@@ -1,4 +1,6 @@
-# Solver prototype
+# Solver template
+
+UNDER CONSTRUCTION.
 
 Minimal functionality. So far, input in json form is parsed and tokens and orders are stored in appropriate data structures. The main function simply prints the input. 
 
