@@ -7,7 +7,7 @@
 #include "./order.hpp"
 #include "./token.hpp"
 #include "./aux.hpp"
-
+#include "./optimize.hpp"
 
 
 /************************************** Global variables that are defined as static in various classes *************************************/
@@ -45,7 +45,7 @@ int main()
 
 
     // solve batch auction
-
+    solve_auction(tokens, orders);
 
     // return solution
 
