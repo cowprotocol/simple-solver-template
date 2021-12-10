@@ -4,7 +4,7 @@ UNDER CONSTRUCTION.
 
 Minimal functionality. So far, input in json form is parsed and tokens and orders are stored in appropriate data structures. The main function simply prints the input. 
 
-AMMs are ignored for the time being, and I am currently implementing them; a PR tonight (Dec 2) will provide a basic implementation of constant-product AMMs.
+Regarding AMMs, only Constant-Product AMMs have been implemented.
 
 A sample json file can be found in ```./sample.json```
 
