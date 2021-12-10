@@ -27,13 +27,13 @@ int main()
 
     std::vector<Token> tokens;      // the vector containing all the tokens appearing in any order/AMM
     std::vector<Order> orders;      // the vector containing all the "regular" orders
-    //std::vector<AMM> amms;          // the vector containing all the AMMs
+    std::vector<CP_AMM> amms;       // the vector containing all the AMMs
 
 /*******************************************************************************************************************************************/
 
 
     // Parsing the input
-    parse_json_file(tokens, orders, Token::num_tokens, Token::idx_tokens);
+    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens);
 
     
     // Just printing out the input
@@ -43,6 +43,8 @@ int main()
     for (auto &i: orders)
         print_order(i, tokens);
 
+    for (auto &i: amms)
+        print_cp_amm(i, tokens);
 
     // solve batch auction
     solve_auction(tokens, orders);
