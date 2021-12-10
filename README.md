@@ -2,7 +2,7 @@
 
 UNDER CONSTRUCTION.
 
-Minimal functionality. So far, input in json form is parsed and tokens and orders are stored in appropriate data structures. The main function simply prints the input. 
+Minimal functionality. So far, input in json form (provided by the Driver) is parsed and tokens, orders and AMMs are stored in appropriate data structures. The main function simply prints the input. 
 
 Regarding AMMs, only Constant-Product AMMs have been implemented.
 
