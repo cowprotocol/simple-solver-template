@@ -12,10 +12,11 @@ jobs:
     env:
       buildDir: '${{ github.workspace }}/build'
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2.3.4
-     - name: make
+    - name: configure
+      run: ./configure
+    - name: make
       run: make
     - name: make check
       run: make check
