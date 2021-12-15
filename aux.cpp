@@ -4,10 +4,13 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <boost/multiprecision/gmp.hpp>
 
 #include "./aux.hpp"
 
+
+#define DEMANGLE_TYPEID_NAME(x) abi::__cxa_demangle(typeid((x)).name(), NULL, NULL, NULL)
 
 
 /*** Function that reads JSON file with batch auction information and builds appropriate data structures with all the required information **/
@@ -21,11 +24,20 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
     input_file >> json_file;
 
     // For-loop that reads all TOKEN information
+    
     for (auto &i: json_file["tokens"].items()) {
+        boost::multiprecision::mpf_float t;
+        if (i.value()["external_price"].is_null())
+            t = -1;
+        else {
+            //std::string tt = std::to_string(i.value()["external_price"]);
+            std::string tt = (i.value()["external_price"]).dump();
+            t = static_cast<boost::multiprecision::mpf_float>(tt);
+        }
         if (i.value()["alias"].is_null())
-            tokens.push_back(Token(i.key(), "_NULL", i.value()["decimals"]));       // TODO: Check if multiple tokens with "null" alias can create any issue
+            tokens.push_back(Token(i.key(), "_NULL", i.value()["decimals"], t));       // TODO: Check if multiple tokens with "null" alias can create any issue
         else
-            tokens.push_back(Token(i.key(), i.value()["alias"], i.value()["decimals"]));
+            tokens.push_back(Token(i.key(), i.value()["alias"], i.value()["decimals"], t));
         _idx_tokens[i.key()] = _num_tokens-1;
     }
 

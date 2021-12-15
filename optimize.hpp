@@ -20,7 +20,7 @@ class SolvedAuction {
 
 
 // The main function that solves the optimization problem and returns the solution, stored in the "solution" vector
-void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders);
+void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms);
 
 
 #endif
