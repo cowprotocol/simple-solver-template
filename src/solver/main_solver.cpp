@@ -3,12 +3,11 @@
 #include <fstream>
 #include <boost/multiprecision/gmp.hpp>
 
-
-#include "./json.hpp"
-#include "./order.hpp"
-#include "./token.hpp"
-#include "./aux.hpp"
+#include "../components/order.hpp"
+#include "../components/token.hpp"
+#include "../api/aux.hpp"
 #include "./optimize.hpp"
+
 
 
 /************************************** Global variables that are defined as static in various classes *************************************/

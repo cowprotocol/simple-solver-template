@@ -4,10 +4,10 @@
 #define AUX_H
 
 #include <vector>
-#include "./token.hpp"
-#include "./order.hpp"
-#include "./amm.hpp"
-#include "./json.hpp"
+#include "../components/token.hpp"
+#include "../components/order.hpp"
+#include "../components/amm.hpp"
+#include "../../external_libs/json.hpp"
 
 
 /*** Function that reads JSON file with batch auction information and build appropriate data structures with all the required information **/

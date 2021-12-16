@@ -3,11 +3,13 @@
 #include <fstream>
 #include <boost/multiprecision/gmp.hpp>
 
-
-#include "./json.hpp"
-#include "./order.hpp"
-#include "./token.hpp"
-#include "./aux.hpp"
+#include <spdlog/spdlog.h>
+#include <spdlog/stopwatch.h>
+#include "../../external_libs/httplib.hpp"
+#include "../../external_libs/json.hpp"
+#include "../components/order.hpp"
+#include "../components/token.hpp"
+#include "../api/aux.hpp"
 #include "./optimize.hpp"
 
 
@@ -33,6 +35,86 @@ int main()
 /*******************************************************************************************************************************************/
 
 
+
+    httplib::Server server;
+
+    // Register endpoints
+
+    server.Get("/health", [](const httplib::Request&, httplib::Response &res) {
+        res.status = 200;
+        return true;
+    });
+
+    server.Post("/solve", [&](const httplib::Request& req, httplib::Response &res) {
+        auto start_time = std::chrono::steady_clock::now();
+        spdlog::stopwatch sw;
+        spdlog::info("\n\n--- 8< ------ 8< ------ 8< ------ 8< ------ 8< ------ 8< ------ 8< --- 8< --- 8< --- 8< ---\n");
+        spdlog::info("Processing new /solve request ...");
+        spdlog::info("Received instance (raw form):\n{}\n", req.body);
+   
+        std::istringstream is(req.body);
+    
+        std::ostringstream os;
+        res.body = os.str();
+
+        // Let's keep this here until the process of getting solutions from the S3 is working properly
+        spdlog::info("Sent solution (raw form):\n{}\n", res.body);
+
+        spdlog::info("Processed /solve request in {:.3} seconds.", sw);
+
+
+        res.status = 200;
+        return true;
+    });
+
+  // Set error handler
+
+  server.set_exception_handler([&](const auto& req, auto& res, std::exception &e) {
+    res.status = 500;
+    spdlog::error(
+      "Exception raised serving {}:\n{}",
+      req.path,
+      e.what()
+    );
+  });
+
+  // Set logger
+
+  server.set_logger([](const auto& req, const auto& res) {
+    if (req.path == "/health")
+      return; // to avoid spamming the logger.
+
+    spdlog::info(
+      "Processed {} request to {} with status {}.",
+      req.method,
+      req.path,
+      res.status
+    );
+  });
+
+  // Set host and port from env vars
+
+  std::string host = "0.0.0.0";
+  std::size_t port = 8000;
+
+  if (const char* p_host_name = std::getenv("HOST"))
+    host = std::string(p_host_name);
+
+  if (const char* p_port = std::getenv("PORT"))
+    port = atoi(p_port);
+
+  spdlog::info(
+      "Starting HTTP server ({} threads) on {}:{} ...",
+      CPPHTTPLIB_THREAD_POOL_COUNT,
+      host,
+      port
+    );
+  server.listen(host.c_str(), port);
+
+
+
+
+
     // Parsing the input
     parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens);
 
@@ -43,11 +125,11 @@ int main()
     for (auto &i: tokens)
         print_token(i);
 
-    //for (auto &i: orders)
-        //print_order(i, tokens);
+    for (auto &i: orders)
+        print_order(i, tokens);
 
-    //for (auto &i: amms)
-        //print_cp_amm(i, tokens);
+    for (auto &i: amms)
+        print_cp_amm(i, tokens);
     
 
    
