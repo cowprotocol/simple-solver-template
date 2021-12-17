@@ -19,7 +19,6 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
     // TODO: Make input reading safe, i.e., handle all potential exceptions/errors
 
     nlohmann::json json_file;
-    std::cout << " I am here " << "\n";
 
     // Reading the input and creating JSON object, depending on whether solver or solver_server made the function call
     if (is_server_call)
@@ -27,7 +26,6 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
     else {
         std::ifstream input_file("./sample_instances/sample.json");
         input_file >> json_file;
-        std::cout << " I am here " << "\n";
     }
 
     // For-loop that reads all TOKEN information

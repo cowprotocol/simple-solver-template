@@ -9,8 +9,6 @@ void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::
     int *vertices;
     int **edges;
     
-    
-
 
     return;
 }
