@@ -67,9 +67,11 @@ int main()
 
         for (auto &i: amms)
             print_cp_amm(i, tokens);
+
     
         // solve batch auction
         solve_auction(tokens, orders, amms);
+
 
         std::istringstream is(req.body); 
         std::ostringstream os;
@@ -122,9 +124,6 @@ int main()
         port
     );
     server.listen(host.c_str(), port);
-
-
-
 
 
     return 0;
