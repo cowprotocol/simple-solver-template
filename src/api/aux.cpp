@@ -20,7 +20,7 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
     // TODO: Properly parse JSON and store sell/buy amounts using appropriate data types
 
     nlohmann::json json_file;
-    std::ifstream input_file("./sample.json");
+    std::ifstream input_file("../../sample_instances/sample.json");
     input_file >> json_file;
 
     // For-loop that reads all TOKEN information

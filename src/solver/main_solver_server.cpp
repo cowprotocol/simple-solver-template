@@ -4,10 +4,10 @@
 #include <boost/multiprecision/gmp.hpp>
 
 
-#include "./json.hpp"
-#include "./order.hpp"
-#include "./token.hpp"
-#include "./aux.hpp"
+#include "../../external_libs/json.hpp"
+#include "../components/order.hpp"
+#include "../components/token.hpp"
+#include "../api/aux.hpp"
 #include "./optimize.hpp"
 
 
