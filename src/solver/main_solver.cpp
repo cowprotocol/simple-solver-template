@@ -43,22 +43,12 @@ int main()
     for (auto &i: tokens)
         print_token(i);
 
-    //for (auto &i: orders)
-        //print_order(i, tokens);
+    for (auto &i: orders)
+        print_order(i, tokens);
 
-    //for (auto &i: amms)
-        //print_cp_amm(i, tokens);
+    for (auto &i: amms)
+        print_cp_amm(i, tokens);
     
-
-   
-   //boost::multiprecision::mpz_int n;
-   //boost::multiprecision::mpf_float m,res;
-   //n = static_cast<boost::multiprecision::mpz_int>("10546467987933131315649879876");
-   //m = static_cast<boost::multiprecision::mpz_int>("6554659871321654564321");
-   //res = n/ m;
-   //std::cout.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
-   //std::cout << res << " = " << n << " / " << m << "\n";
-
 
     // solve batch auction
     solve_auction(tokens, orders, amms);
