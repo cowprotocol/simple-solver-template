@@ -33,7 +33,7 @@ int main()
 
 
     // Parsing the input
-    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens);
+    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, false, "dummy");
 
     
     // Just printing out the input
