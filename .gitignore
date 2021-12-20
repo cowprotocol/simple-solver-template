@@ -1,2 +1,2 @@
 #ignore external libraries
-./external_libs/
+./external_libs/spdlog/*

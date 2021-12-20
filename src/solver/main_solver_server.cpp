@@ -4,7 +4,6 @@
 #include <boost/multiprecision/gmp.hpp>
 
 #include <spdlog/spdlog.h>
-#include <spdlog/stopwatch.h>
 #include "../../external_libs/httplib.hpp"
 #include "../../external_libs/json.hpp"
 #include "../components/order.hpp"
@@ -45,8 +44,6 @@ int main()
     });
 
     server.Post("/solve", [&](const httplib::Request& req, httplib::Response &res) {
-        auto start_time = std::chrono::steady_clock::now();
-        spdlog::stopwatch sw;
         spdlog::info("\n\n--- 8< ------ 8< ------ 8< ------ 8< ------ 8< ------ 8< ------ 8< --- 8< --- 8< --- 8< ---\n");
         spdlog::info("Processing new /solve request ...");
         spdlog::info("Received instance (raw form):\n{}\n", req.body);
