@@ -17,7 +17,7 @@ jobs:
     - name: Install boost
       run: sudo apt-get install libboost-all-dev
     - name: Install json and httplib
-      run: mkdir external_libs ; cd external_libs ;  wget -L https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp ; wget -L https://github.com/yhirose/cpp-httplib/blob/master/httplib.h
+      run: mkdir -p external_libs ; cd external_libs ;  wget -L https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp ; wget -L https://github.com/yhirose/cpp-httplib/blob/master/httplib.h
     - name: Install spdlog
       run: mkdir ~/spdlog ; cd ~/spdlog ; git clone https://github.com/gabime/spdlog
     - name: make solver
