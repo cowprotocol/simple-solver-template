@@ -3,7 +3,7 @@
 #include <fstream>
 #include <boost/multiprecision/gmp.hpp>
 
-#include "../../external_libs/json.hpp"
+#include <json.hpp>
 #include "../components/order.hpp"
 #include "../components/token.hpp"
 #include "../api/aux.hpp"
