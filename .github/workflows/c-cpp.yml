@@ -20,7 +20,8 @@ jobs:
       run: mkdir ~/spdlog ; cd ~/spdlog ; git clone https://github.com/gabime/spdlog
     - name: make solver
       run: make
-    - name: make solver_server
+    - name: make server
+      run: make solver_server
     #- name: make check
     #  run: make check
     #- name: make distcheck
