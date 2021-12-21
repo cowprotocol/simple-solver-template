@@ -14,19 +14,9 @@
 
 
 /*** Function that reads JSON file with batch auction information and builds appropriate data structures with all the required information **/
-void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int &_num_tokens, std::map<std::string, int> _idx_tokens, bool is_server_call, std::string server_input_string)
+void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int &_num_tokens, std::map<std::string, int> _idx_tokens, nlohmann::json &json_file)
 {
     // TODO: Make input reading safe, i.e., handle all potential exceptions/errors
-
-    nlohmann::json json_file;
-
-    // Reading the input and creating JSON object, depending on whether solver or solver_server made the function call
-    if (is_server_call)
-        json_file = nlohmann::json::parse(server_input_string);
-    else {
-        std::ifstream input_file("./sample_instances/sample.json");
-        input_file >> json_file;
-    }
 
     // For-loop that reads all TOKEN information
     

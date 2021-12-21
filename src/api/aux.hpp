@@ -11,7 +11,7 @@
 
 
 /*** Function that reads JSON file with batch auction information and build appropriate data structures with all the required information **/
-void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int &_num_tokens, std::map<std::string, int> _idx_tokens, bool is_server_call, std::string server_input_string);
+void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int &_num_tokens, std::map<std::string, int> _idx_tokens, nlohmann::json &json_file);
 
 
 #endif

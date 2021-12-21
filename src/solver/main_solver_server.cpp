@@ -33,7 +33,7 @@ int main()
 
 /*******************************************************************************************************************************************/
 
-
+    nlohmann::json json_file;
     httplib::Server server;
 
     // Register endpoints
@@ -48,9 +48,9 @@ int main()
         spdlog::info("Processing new /solve request ...");
         spdlog::info("Received instance (raw form):\n{}\n", req.body);
    
-        
+        json_file = nlohmann::json::parse(req.body);
         // Parsing the input
-        parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, true, req.body);
+        parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, json_file);
 
     
         // Just printing out the input

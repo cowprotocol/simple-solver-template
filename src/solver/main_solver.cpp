@@ -32,9 +32,12 @@ int main()
 
 /*******************************************************************************************************************************************/
 
+    nlohmann::json json_file;
+    std::ifstream input_file("./sample_instances/sample.json");
+    input_file >> json_file;
 
     // Parsing the input
-    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, false, "dummy");
+    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, json_file);
 
     
     // Just printing out the input
