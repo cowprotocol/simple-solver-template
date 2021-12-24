@@ -3,12 +3,12 @@
 #include <fstream>
 #include <boost/multiprecision/gmp.hpp>
 
-
 #include "../../external_libs/json.hpp"
 #include "../components/order.hpp"
 #include "../components/token.hpp"
 #include "../api/aux.hpp"
 #include "./optimize.hpp"
+
 
 
 /************************************** Global variables that are defined as static in various classes *************************************/
@@ -32,9 +32,12 @@ int main()
 
 /*******************************************************************************************************************************************/
 
+    nlohmann::json json_file;
+    std::ifstream input_file("./sample_instances/sample.json");
+    input_file >> json_file;
 
     // Parsing the input
-    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens);
+    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, json_file);
 
     
     // Just printing out the input

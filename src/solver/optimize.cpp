@@ -1,6 +1,7 @@
 #include "../components/token.hpp"
 #include "../components/order.hpp"
 #include "../components/amm.hpp"
+#include "./optimize.hpp"
 
 void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms)
 {
@@ -8,8 +9,6 @@ void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::
     int *vertices;
     int **edges;
     
-    
-
 
     return;
 }

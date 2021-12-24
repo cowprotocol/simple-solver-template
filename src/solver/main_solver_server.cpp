@@ -3,7 +3,8 @@
 #include <fstream>
 #include <boost/multiprecision/gmp.hpp>
 
-
+#include <spdlog/spdlog.h>
+#include "../../external_libs/httplib.hpp"
 #include "../../external_libs/json.hpp"
 #include "../components/order.hpp"
 #include "../components/token.hpp"
@@ -32,28 +33,94 @@ int main()
 
 /*******************************************************************************************************************************************/
 
+    nlohmann::json json_file;
+    httplib::Server server;
 
-    // Parsing the input
-    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens);
+    // Register endpoints
+
+    server.Get("/health", [](const httplib::Request&, httplib::Response &res) {
+        res.status = 200;
+        return true;
+    });
+
+    server.Post("/solve", [&](const httplib::Request& req, httplib::Response &res) {
+        spdlog::info("\n\n--- 8< ------ 8< ------ 8< ------ 8< ------ 8< ------ 8< ------ 8< --- 8< --- 8< --- 8< ---\n");
+        spdlog::info("Processing new /solve request ...");
+        spdlog::info("Received instance (raw form):\n{}\n", req.body);
+   
+        json_file = nlohmann::json::parse(req.body);
+        // Parsing the input
+        parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, json_file);
 
     
-    // Just printing out the input
-    std::cout.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
+        // Just printing out the input
+        std::cout.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
 
-    for (auto &i: tokens)
-        print_token(i);
+        for (auto &i: tokens)
+            print_token(i);
 
-    for (auto &i: orders)
-        print_order(i, tokens);
+        for (auto &i: orders)
+            print_order(i, tokens);
 
-    for (auto &i: amms)
-        print_cp_amm(i, tokens);
+        for (auto &i: amms)
+            print_cp_amm(i, tokens);
+
     
+        // solve batch auction
+        solve_auction(tokens, orders, amms);
 
-    // solve batch auction
-    solve_auction(tokens, orders, amms);
 
-    // return solution
+        std::istringstream is(req.body); 
+        std::ostringstream os;
+        res.body = os.str();
+        res.status = 200;
+
+        return true;
+    });
+
+    // Set error handler
+
+    server.set_exception_handler([&](const auto& req, auto& res, std::exception &e) {
+        res.status = 500;
+        spdlog::error(
+            "Exception raised serving {}:\n{}",
+            req.path,
+            e.what()
+        );
+    });
+
+    // Set logger
+
+    server.set_logger([](const auto& req, const auto& res) {
+        if (req.path == "/health")
+            return; // to avoid spamming the logger.
+
+        spdlog::info(
+            "Processed {} request to {} with status {}.",
+            req.method,
+            req.path,
+            res.status
+        );
+    });
+
+    // Set host and port from env vars
+
+    std::string host = "0.0.0.0";
+    std::size_t port = 8000;
+
+    if (const char* p_host_name = std::getenv("HOST"))
+        host = std::string(p_host_name);
+
+    if (const char* p_port = std::getenv("PORT"))
+        port = atoi(p_port);
+
+    spdlog::info(
+        "Starting HTTP server ({} threads) on {}:{} ...",
+        CPPHTTPLIB_THREAD_POOL_COUNT,
+        host,
+        port
+    );
+    server.listen(host.c_str(), port);
 
 
     return 0;
