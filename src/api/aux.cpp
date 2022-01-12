@@ -22,6 +22,9 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
     
     for (auto &i: json_file["tokens"].items()) {
         boost::multiprecision::mpf_float t;
+        bool normalize_priority;
+
+        normalize_priority = (i.value()["normalize_priority"] == 1) ? true : false;
         if (i.value()["external_price"].is_null())
             t = -1;
         else {
@@ -30,9 +33,9 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
             t = static_cast<boost::multiprecision::mpf_float>(tt);
         }
         if (i.value()["alias"].is_null())
-            tokens.push_back(Token(i.key(), "_NULL", i.value()["decimals"], t));       // TODO: Check if multiple tokens with "null" alias can create any issue
+            tokens.push_back(Token(i.key(), "_NULL", i.value()["decimals"], t, normalize_priority));       // TODO: Check if multiple tokens with "null" alias can create any issue
         else
-            tokens.push_back(Token(i.key(), i.value()["alias"], i.value()["decimals"], t));
+            tokens.push_back(Token(i.key(), i.value()["alias"], i.value()["decimals"], t, normalize_priority));
         _idx_tokens[i.key()] = _num_tokens-1;
     }
 

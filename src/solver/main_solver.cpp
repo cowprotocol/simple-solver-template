@@ -43,15 +43,16 @@ int main()
     // Just printing out the input
     std::cout.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
 
-    for (auto &i: tokens)
-        print_token(i);
 
-    for (auto &i: orders)
-        print_order(i, tokens);
+    //for (auto &i: tokens)
+        //print_token(i);
 
-    for (auto &i: amms)
-        print_cp_amm(i, tokens);
-    
+    //for (auto &i: orders)
+        //print_order(i, tokens);
+
+    //for (auto &i: amms)
+        //print_cp_amm(i, tokens);
+
 
     // solve batch auction
     solve_auction(tokens, orders, amms);
