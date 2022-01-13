@@ -53,9 +53,9 @@ int main()
         parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, json_file);
 
     
-        // Just printing out the input
         std::cout.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
 
+        /*
         for (auto &i: tokens)
             print_token(i);
 
@@ -64,6 +64,7 @@ int main()
 
         for (auto &i: amms)
             print_cp_amm(i, tokens);
+        */
 
     
         // solve batch auction

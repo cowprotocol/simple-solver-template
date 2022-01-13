@@ -11,10 +11,69 @@
 
 
 
-void process_sell_order()
+void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
+   int j, num_amms;
+    boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, x;
+    boost::multiprecision::mpf_float rational_x1;
+    boost::multiprecision::mpf_float rational_x;
+    boost::multiprecision::mpf_float exchange_rate;
+    boost::multiprecision::mpf_float temp;
+    
+    x_ = orders[i].buy_amount;
+    y_ = orders[i].sell_amount;
+    num_amms = amms.size();
 
+    for (j = 0; j < num_amms; j++) {
+        x0 = 0;
+        y0 = 0;
+        if (amms[j].sell_token_index == orders[i].sell_token_index)
+            x0 = amms[j].sell_reserve_amount;
+        if (amms[j].buy_token_index == orders[i].sell_token_index)
+            x0 = amms[j].buy_reserve_amount;
+        if (amms[j].sell_token_index == orders[i].buy_token_index)
+            y0 = amms[j].sell_reserve_amount;
+        if (amms[j].buy_token_index == orders[i].buy_token_index)
+            y0 = amms[j].buy_reserve_amount;
+
+        if ((x0 <= 0) || (y0 <= 0))
+            continue;
+
+        // at this point, we have found a "matching" AMM
+        //y1 = y0 - x;
+        //x1 = x0 + 0.997y_
+        //x = y0 - 
+        //x = y0 * (1 - x0/x1)
+        rational_x1 = static_cast<boost::multiprecision::mpf_float>(y0 - x_);
+        rational_x = y0 * (1 - x0/rational_x1);
+        x = static_cast<boost::multiprecision::mpz_int>(rational_x);
+
+        if (x < x_)
+            continue;
+        
+        // at this point, the trade can happen and so we now check if objective improves, and if so, compute the prices
+        temp = (x - x_) * tokens[orders[i].buy_token_index].external_price + orders[i].fee_amount - orders[i].cost_amount;
+        if (temp > best_order.objective_value) {
+            // found better solution
+            best_order.objective_value = temp;
+            best_order.executed_order_idx = i;
+            best_order.used_amm_idx = j;
+            best_order.executed_buy_amount = x;
+            best_order.executed_sell_amount = y_;
+            exchange_rate = (static_cast<boost::multiprecision::mpf_float>(best_order.executed_sell_amount)) / (static_cast<boost::multiprecision::mpf_float>(best_order.executed_buy_amount));
+            if (tokens[orders[i].buy_token_index].normalize_priority == 0) {
+                best_order.buy_token_price = 1000000000000000000;
+                best_order.sell_token_price = best_order.buy_token_price / exchange_rate;
+            }
+            else {
+                best_order.sell_token_price = 1000000000000000000;
+                best_order.buy_token_price = exchange_rate * best_order.sell_token_price;
+            }
+        }
+    }
+    return;
 }
+
 
 
 
@@ -24,7 +83,8 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
     boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, y;
     boost::multiprecision::mpf_float rational_y1;
     boost::multiprecision::mpf_float rational_y;
-    boost::multiprecision::mpf_float temp, exr;
+    boost::multiprecision::mpf_float exchange_rate;
+    boost::multiprecision::mpf_float temp;
     
     x_ = orders[i].buy_amount;
     y_ = orders[i].sell_amount;
@@ -55,7 +115,7 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
         if (y > y_)
             continue;
         
-        // at this point, the trade can happen and so we now compute the prices
+        // at this point, the trade can happen and so we now check if objective improves, and if so, compute the prices
         temp = (y_ - y) * tokens[orders[i].sell_token_index].external_price + orders[i].fee_amount - orders[i].cost_amount;
         if (temp > best_order.objective_value) {
             // found better solution
@@ -64,21 +124,14 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
             best_order.used_amm_idx = j;
             best_order.executed_buy_amount = x_;
             best_order.executed_sell_amount = y;
-            exr = (static_cast<boost::multiprecision::mpf_float>(best_order.executed_sell_amount)) / (static_cast<boost::multiprecision::mpf_float>(best_order.executed_buy_amount));
-            if (tokens[orders[i].sell_token_index].normalize_priority) {
-                best_order.sell_token_price = 1000000000000000000;
-                best_order.buy_token_price = exr;
+            exchange_rate = (static_cast<boost::multiprecision::mpf_float>(best_order.executed_sell_amount)) / (static_cast<boost::multiprecision::mpf_float>(best_order.executed_buy_amount));
+            if (tokens[orders[i].buy_token_index].normalize_priority) {
+                best_order.buy_token_price = 1000000000000000000;
+                best_order.sell_token_price = best_order.buy_token_price / exchange_rate;
             }
             else {
-                if (tokens[orders[i].buy_token_index].normalize_priority) {
-                    best_order.buy_token_price = 1000000000000000000;;
-                    best_order.sell_token_price = 1.0 / exr;
-                }
-                else {
-                    best_order.sell_token_price = 0.998 * tokens[orders[i].sell_token_index].external_price;    // reducing the price of the sell token by 0.2%
-                    best_order.buy_token_price = exr * best_order.sell_token_price;
-                }
-
+                best_order.sell_token_price = 1000000000000000000;
+                best_order.buy_token_price = exchange_rate * best_order.sell_token_price;
             }
         }
     }
@@ -204,7 +257,7 @@ void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::
             continue;
 
         if (orders[i].is_sell_order)
-            process_sell_order();
+            process_sell_order(tokens, orders, amms, i, best_order);
         else
             process_buy_order(tokens, orders, amms, i, best_order);
     }
