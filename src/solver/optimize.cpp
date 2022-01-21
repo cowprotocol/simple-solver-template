@@ -24,17 +24,15 @@ boost::multiprecision::mpf_float custom_pow(boost::multiprecision::mpz_int x, in
         return (1/res);
 }
 
-// main function that processes a sell order, checks if it can be matched against a single liquidity pool and if so, it also checks whether it gives a strictly better objective
+// main function that processes a sell order, checks if it can be matched against a single liquidity pool
+// and if so, it also checks whether it gives a strictly better objective
 void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
    int j, num_amms;
     boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, x;
     boost::multiprecision::mpf_float rational_x1;
     boost::multiprecision::mpf_float rational_x;
-    boost::multiprecision::mpf_float exchange_rate;
     boost::multiprecision::mpf_float temp;
-    boost::multiprecision::mpf_float external_price_of_buy_token_in_eth;
-    boost::multiprecision::mpf_float external_price_of_fee_token_in_eth;
 
     
     x_ = orders[i].buy_amount;
@@ -57,11 +55,12 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
             continue;
 
         // at this point, we have found a "matching" AMM
-        //y1 = y0 - x;
-        //x1 = x0 + 0.997y_
-        //x = y0 - 
-        //x = y0 * (1 - x0/x1)
-        rational_x1 = static_cast<boost::multiprecision::mpf_float>(y0 - x_);
+        // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and (x0, y0) is the original pool balance
+        // Since it is a fill-or-kill sell order, we have x1 = x0 + 0.997y_
+        // and y1 = y0 - x
+        // Thus, maximally exploiting the pool, we get that y1 = x0 * y0 / x1,
+        // which implies that x = y0 * (1 - x0/x1)
+        rational_x1 = static_cast<boost::multiprecision::mpf_float>(x0) + 0.997 * static_cast<boost::multiprecision::mpf_float>(y_);
         rational_x = y0 * (1 - x0/rational_x1);
         x = static_cast<boost::multiprecision::mpz_int>(rational_x);
 
@@ -69,9 +68,7 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
             continue;
         
         // at this point, the trade can happen and so we now check if objective improves, and if so, compute the prices
-        external_price_of_buy_token_in_eth = tokens[orders[i].buy_token_index].external_price * custom_pow(10, tokens[orders[i].buy_token_index].decimals - 18);
-        external_price_of_fee_token_in_eth = tokens[orders[i].fee_token_index].external_price * custom_pow(10, tokens[orders[i].fee_token_index].decimals - 18);
-        temp = (x - x_) * external_price_of_buy_token_in_eth  + orders[i].fee_amount * external_price_of_fee_token_in_eth - orders[i].cost_amount;
+        temp = (x - x_) * tokens[orders[i].buy_token_index].external_price  + orders[i].fee_amount * tokens[orders[i].fee_token_index].external_price - orders[i].cost_amount * tokens[orders[i].cost_token_index].external_price;
 
         if (temp > best_order.objective_value) {
             // found better solution
@@ -80,15 +77,17 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
             best_order.used_amm_idx = j;
             best_order.executed_buy_amount = x;
             best_order.executed_sell_amount = y_;
-            exchange_rate = (static_cast<boost::multiprecision::mpf_float>(best_order.executed_sell_amount)) / (static_cast<boost::multiprecision::mpf_float>(best_order.executed_buy_amount));
             if (tokens[orders[i].buy_token_index].normalize_priority) {
-                best_order.buy_token_price = custom_pow(10, tokens[orders[i].buy_token_index].decimals);
-                best_order.sell_token_price = best_order.buy_token_price * custom_pow(10, tokens[orders[i].buy_token_index].decimals - tokens[orders[i].sell_token_index].decimals) / exchange_rate;
+                best_order.buy_token_price = 1.0;
+                best_order.sell_token_price = (static_cast<boost::multiprecision::mpf_float>(x)) / (static_cast<boost::multiprecision::mpf_float>(y_));
+
             }
             else {
-                best_order.sell_token_price = custom_pow(10, tokens[orders[i].sell_token_index].decimals);
-                best_order.buy_token_price = exchange_rate * best_order.sell_token_price * custom_pow(10, tokens[orders[i].sell_token_index].decimals - tokens[orders[i].buy_token_index].decimals);
+                best_order.sell_token_price = 1.0;
+                best_order.buy_token_price = (static_cast<boost::multiprecision::mpf_float>(y_)) / (static_cast<boost::multiprecision::mpf_float>(x));
             }
+            best_order.buy_token_price = best_order.buy_token_price * pow(10, tokens[orders[i].buy_token_index].decimals);
+            best_order.sell_token_price = best_order.sell_token_price * pow(10, tokens[orders[i].sell_token_index].decimals);
         }
     }
     return;
@@ -96,17 +95,15 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
 
 
 
-// main function that processes a buy order, checks if it can be matched against a single liquidity pool and if so, it also checks whether it gives a strictly better objective
+// main function that processes a buy order, checks if it can be matched against a single liquidity pool
+// and if so, it also checks whether it gives a strictly better objective
 void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
     int j, num_amms;
     boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, y;
     boost::multiprecision::mpf_float rational_y1;
     boost::multiprecision::mpf_float rational_y;
-    boost::multiprecision::mpf_float exchange_rate;
     boost::multiprecision::mpf_float temp;
-    boost::multiprecision::mpf_float external_price_of_sell_token_in_eth;
-    boost::multiprecision::mpf_float external_price_of_fee_token_in_eth;
     
     x_ = orders[i].buy_amount;
     y_ = orders[i].sell_amount;
@@ -128,19 +125,20 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
             continue;
 
         // at this point, we have found a "matching" AMM
-        //y1 = y0 - x;
-        //y = 1000 * ((y0 * x0 / y1) - x0)  / 997;
+        // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and (x0, y0) is the original pool balance
+        // Since it is a fill-or-kill sell order, we have x1 = x0 + 0.997y
+        // and y1 = y0 - x_
+        // Thus, maximally exploiting the pool, we get that x1 = x0 * y0 / y1,
+        // which implies that y = 1000 * ((y0 * x0 / y1) - x0)  / 997;
         rational_y1 = static_cast<boost::multiprecision::mpf_float>(y0 - x_);
-        rational_y = 1000 * (( y0 * x0 / rational_y1) - x0) / 997;
+        rational_y = 1000 * (( static_cast<boost::multiprecision::mpf_float>(y0 * x0) / rational_y1) - static_cast<boost::multiprecision::mpf_float>(x0)) / 997;
         y = static_cast<boost::multiprecision::mpz_int>(rational_y);
 
         if (y > y_)
             continue;
         
         // at this point, the trade can happen and so we now check if objective improves, and if so, compute the prices
-        external_price_of_sell_token_in_eth = tokens[orders[i].sell_token_index].external_price * custom_pow(10, tokens[orders[i].sell_token_index].decimals - 18);
-        external_price_of_fee_token_in_eth = tokens[orders[i].fee_token_index].external_price * custom_pow(10, tokens[orders[i].fee_token_index].decimals - 18);
-        temp = (y_ - y) * external_price_of_sell_token_in_eth + orders[i].fee_amount * external_price_of_fee_token_in_eth - orders[i].cost_amount;
+        temp = (y_ - y) * tokens[orders[i].sell_token_index].external_price + orders[i].fee_amount * tokens[orders[i].fee_token_index].external_price - orders[i].cost_amount * tokens[orders[i].cost_token_index].external_price;
 
         if (temp > best_order.objective_value) {
             // found better solution
@@ -149,15 +147,16 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
             best_order.used_amm_idx = j;
             best_order.executed_buy_amount = x_;
             best_order.executed_sell_amount = y;
-            exchange_rate = (static_cast<boost::multiprecision::mpf_float>(best_order.executed_sell_amount)) / (static_cast<boost::multiprecision::mpf_float>(best_order.executed_buy_amount));
             if (tokens[orders[i].buy_token_index].normalize_priority) {
-                best_order.buy_token_price = custom_pow(10, tokens[orders[i].buy_token_index].decimals);
-                best_order.sell_token_price = best_order.buy_token_price * custom_pow(10, tokens[orders[i].buy_token_index].decimals - tokens[orders[i].sell_token_index].decimals) / exchange_rate;
+                best_order.buy_token_price = 1.0;
+                best_order.sell_token_price = (static_cast<boost::multiprecision::mpf_float>(x_)) / (static_cast<boost::multiprecision::mpf_float>(y));
             }
             else {
-                best_order.sell_token_price = custom_pow(10, tokens[orders[i].sell_token_index].decimals);
-                best_order.buy_token_price = exchange_rate * best_order.sell_token_price * custom_pow(10, tokens[orders[i].sell_token_index].decimals - tokens[orders[i].buy_token_index].decimals);
+                best_order.sell_token_price = 1.0;
+                best_order.buy_token_price = (static_cast<boost::multiprecision::mpf_float>(y)) / (static_cast<boost::multiprecision::mpf_float>(x_));
             }
+            best_order.buy_token_price = best_order.buy_token_price * pow(10, tokens[orders[i].buy_token_index].decimals);
+            best_order.sell_token_price = best_order.sell_token_price * pow(10, tokens[orders[i].sell_token_index].decimals);
         }
     }
     return;
@@ -167,7 +166,6 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
 
 void generate_output(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, ExecutedOrder &best_order, nlohmann::json &output)
 {
-    int i;
     bool found;
     boost::multiprecision::mpz_int temp;
 
@@ -183,7 +181,7 @@ void generate_output(std::vector<Token> &tokens, std::vector<Order> &orders, std
     output["metadata"]["has_solution"] = true;
     output["metadata"]["result"] = "xxxx";
 
-    for (i = 0; i < tokens.size(); i++)
+    for (long unsigned int i = 0; i < tokens.size(); i++)
         if (tokens[i].normalize_priority)
             output["ref_token"] = tokens[i].name;
 
@@ -269,7 +267,7 @@ void generate_output(std::vector<Token> &tokens, std::vector<Order> &orders, std
 /*********************************************************************************************************************************************/
 void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms)
 {
-    int i,j;
+    int i;
     int num_orders;
     nlohmann::json output;
 
