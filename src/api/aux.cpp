@@ -19,75 +19,75 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
     // TODO: Make input reading safe, i.e., handle all potential exceptions/errors
 
     // For-loop that reads all TOKEN information
-    
-    for (auto &i: json_file["tokens"].items()) {
-        boost::multiprecision::mpf_float t;
+    for (auto &tkn: json_file["tokens"].items()) {
+        boost::multiprecision::mpf_float external_price;
         bool normalize_priority;
 
-        normalize_priority = (i.value()["normalize_priority"] == 1);
-        if (i.value()["external_price"].is_null())
-            t = -1;
-        else {
-            //std::string tt = std::to_string(i.value()["external_price"]);
-            std::string tt = (i.value()["external_price"]).dump();
-            t = static_cast<boost::multiprecision::mpf_float>(tt);
+        normalize_priority = (tkn.value()["normalize_priority"] == 1);
+        if (!tkn.value()["external_price"].is_null()) {
+            std::string external_price_string = (tkn.value()["external_price"]).dump();
+            external_price = static_cast<boost::multiprecision::mpf_float>(external_price_string);
         }
-        if (i.value()["alias"].is_null())
-            tokens.push_back(Token(i.key(), "_NULL", i.value()["decimals"], t, normalize_priority));       // TODO: Check if multiple tokens with "null" alias can create any issue
         else
-            tokens.push_back(Token(i.key(), i.value()["alias"], i.value()["decimals"], t, normalize_priority));
-        _idx_tokens[i.key()] = _num_tokens-1;
+            external_price = -1;
+
+        if (!tkn.value()["alias"].is_null())
+            tokens.push_back(Token(tkn.key(), tkn.value()["alias"], tkn.value()["decimals"], external_price, normalize_priority));
+        else
+            tokens.push_back(Token(tkn.key(), "_NULL", tkn.value()["decimals"], external_price, normalize_priority));       // TODO: Check if multiple tokens with "null" alias can create any issue
+            
+        _idx_tokens[tkn.key()] = _num_tokens-1;
     }
 
     // For-loop that reads all ORDERS information
-    for (auto &i: json_file["orders"].items()) {
-        int t1 = std::stoi(i.key());
-        int t2 = _idx_tokens.at(i.value()["sell_token"]);
-        int t3 = _idx_tokens.at(i.value()["buy_token"]);
-        bool t4 = i.value()["is_sell_order"];
-        bool t5 = i.value()["is_liquidity_order"];
-        bool t6 = i.value()["allow_partial_fill"];
-        std::string tt7 = i.value()["sell_amount"];
-        boost::multiprecision::mpz_int t7 = static_cast<boost::multiprecision::mpz_int>(tt7);
-        std::string tt8 = i.value()["buy_amount"];
-        boost::multiprecision::mpz_int t8 = static_cast<boost::multiprecision::mpz_int>(tt8);
-        int t9 = _idx_tokens.at(i.value()["fee"]["token"]);
-        std::string tt10 = i.value()["fee"]["amount"];
-        boost::multiprecision::mpz_int t10 = static_cast<boost::multiprecision::mpz_int>(tt10);
-        int t11 = _idx_tokens.at(i.value()["cost"]["token"]);
-        std::string tt12 = i.value()["cost"]["amount"];
-        boost::multiprecision::mpz_int t12 = static_cast<boost::multiprecision::mpz_int>(tt12);
+    for (auto &o: json_file["orders"].items()) {
+        int key = std::stoi(o.key());
+        int sell_token = _idx_tokens.at(o.value()["sell_token"]);
+        int buy_token = _idx_tokens.at(o.value()["buy_token"]);
+        bool is_sell_order = o.value()["is_sell_order"];
+        bool is_liquidity_order = o.value()["is_liquidity_order"];
+        bool allow_partial_fill = o.value()["allow_partial_fill"];
+        std::string sell_amount_string = o.value()["sell_amount"];
+        boost::multiprecision::mpz_int sell_amount = static_cast<boost::multiprecision::mpz_int>(sell_amount_string);
+        std::string buy_amount_string = o.value()["buy_amount"];
+        boost::multiprecision::mpz_int buy_amount = static_cast<boost::multiprecision::mpz_int>(buy_amount_string);
+        int fee_token = _idx_tokens.at(o.value()["fee"]["token"]);
+        std::string fee_amount_string = o.value()["fee"]["amount"];
+        boost::multiprecision::mpz_int fee_amount = static_cast<boost::multiprecision::mpz_int>(fee_amount_string);
+        int cost_token = _idx_tokens.at(o.value()["cost"]["token"]);
+        std::string cost_amount_string = o.value()["cost"]["amount"];
+        boost::multiprecision::mpz_int cost_amount = static_cast<boost::multiprecision::mpz_int>(cost_amount_string);
 
-        orders.push_back(Order(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12));
+        orders.push_back(Order(key, sell_token, buy_token, is_sell_order, is_liquidity_order, allow_partial_fill, sell_amount, buy_amount, fee_token, fee_amount, cost_token, cost_amount));
     }
 
     // For-loop that reads all AMM information
-    for (auto &i: json_file["amms"].items()) {
-        int t1 = std::stoi(i.key());
+    for (auto &am: json_file["amms"].items()) {
+        int key = std::stoi(am.key());
 
         // We will only use ConstantProduct AMMs, so this check ensures that we ignore the rest
-        if (i.value()["kind"] != "ConstantProduct")
+        if (am.value()["kind"] != "ConstantProduct")
             continue;
         
-        int t2[2];
-        boost::multiprecision::mpz_int t3[2];
+        int pools_idx[2];
+        boost::multiprecision::mpz_int pools_reserves[2];
         int counter = 0;
 
-        for (auto &j: i.value()["reserves"].items()) {
-            t2[counter] = _idx_tokens.at(j.key());
-            std::string tt3 = j.value();
-            t3[counter] = static_cast<boost::multiprecision::mpz_int>(tt3);
+        for (auto &j: am.value()["reserves"].items()) {
+            pools_idx[counter] = _idx_tokens.at(j.key());
+            std::string reserves_string = j.value();
+            pools_reserves[counter] = static_cast<boost::multiprecision::mpz_int>(reserves_string);
             counter++;
         }
 
-        std::string tt4 = i.value()["fee"];
-        boost::multiprecision::mpf_float t4 = static_cast<boost::multiprecision::mpf_float>(tt4);
-        int t5 = _idx_tokens.at(i.value()["cost"]["token"]);
-        std::string tt6 = i.value()["cost"]["amount"];
-        boost::multiprecision::mpz_int t6 = static_cast<boost::multiprecision::mpz_int>(tt6);
-        bool t7 = i.value()["mandatory"];
+        std::string fee_fraction_string = am.value()["fee"];
+        boost::multiprecision::mpf_float fee_fraction = static_cast<boost::multiprecision::mpf_float>(fee_fraction_string);
+        int cost_token = _idx_tokens.at(am.value()["cost"]["token"]);
+        std::string cost_amount_string = am.value()["cost"]["amount"];
+        boost::multiprecision::mpz_int cost_amount = static_cast<boost::multiprecision::mpz_int>(cost_amount_string);
+        bool is_mandatory = am.value()["mandatory"];
 
-        amms.push_back(CP_AMM(t1,t2[0],t3[0],t2[1],t3[1],t4,t5,t6,t7));
+        amms.push_back(CP_AMM(key, pools_idx[0], pools_reserves[0], pools_idx[1], pools_reserves[1], fee_fraction, cost_token, cost_amount, is_mandatory));
     }
 
     return;

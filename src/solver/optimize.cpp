@@ -44,14 +44,19 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
         y0 = 0;
         if (amms[j].sell_token_index == orders[i].sell_token_index)
             x0 = amms[j].sell_reserve_amount;
+        else {
+            if (amms[j].sell_token_index == orders[i].buy_token_index)
+                y0 = amms[j].sell_reserve_amount;
+        }
+
         if (amms[j].buy_token_index == orders[i].sell_token_index)
             x0 = amms[j].buy_reserve_amount;
-        if (amms[j].sell_token_index == orders[i].buy_token_index)
-            y0 = amms[j].sell_reserve_amount;
-        if (amms[j].buy_token_index == orders[i].buy_token_index)
-            y0 = amms[j].buy_reserve_amount;
+        else {
+            if (amms[j].buy_token_index == orders[i].buy_token_index)
+                y0 = amms[j].buy_reserve_amount;
+        }
 
-        if ((x0 <= 0) || (y0 <= 0))
+        if (x0 <= 0 || y0 <= 0)
             continue;
 
         // at this point, we have found a "matching" AMM
@@ -114,14 +119,18 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
         y0 = 0;
         if (amms[j].sell_token_index == orders[i].sell_token_index)
             x0 = amms[j].sell_reserve_amount;
+        else {
+            if (amms[j].sell_token_index == orders[i].buy_token_index)
+                y0 = amms[j].sell_reserve_amount;
+        }
         if (amms[j].buy_token_index == orders[i].sell_token_index)
             x0 = amms[j].buy_reserve_amount;
-        if (amms[j].sell_token_index == orders[i].buy_token_index)
-            y0 = amms[j].sell_reserve_amount;
-        if (amms[j].buy_token_index == orders[i].buy_token_index)
-            y0 = amms[j].buy_reserve_amount;
+        else {
+            if (amms[j].buy_token_index == orders[i].buy_token_index)
+                y0 = amms[j].buy_reserve_amount;
+        }
 
-        if ((x0 <= 0) || (y0 <= x_))
+        if (x0 <= 0 || y0 <= x_)
             continue;
 
         // at this point, we have found a "matching" AMM
