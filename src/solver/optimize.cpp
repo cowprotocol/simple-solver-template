@@ -30,8 +30,8 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
 {
    int j, num_amms;
     boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, x;
-    boost::multiprecision::mpf_float rational_x1;
-    boost::multiprecision::mpf_float rational_x;
+    boost::multiprecision::mpf_float float_x1;
+    boost::multiprecision::mpf_float float_x;
     boost::multiprecision::mpf_float temp;
 
     
@@ -56,13 +56,13 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
 
         // at this point, we have found a "matching" AMM
         // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and (x0, y0) is the original pool balance
-        // Since it is a fill-or-kill sell order, we have x1 = x0 + 0.997y_
+        // Since it is a fill-or-kill sell order, we have x1 = x0 + (1-fee)y_
         // and y1 = y0 - x
         // Thus, maximally exploiting the pool, we get that y1 = x0 * y0 / x1,
         // which implies that x = y0 * (1 - x0/x1)
-        rational_x1 = static_cast<boost::multiprecision::mpf_float>(x0) + 0.997 * static_cast<boost::multiprecision::mpf_float>(y_);
-        rational_x = y0 * (1 - x0/rational_x1);
-        x = static_cast<boost::multiprecision::mpz_int>(rational_x);
+        float_x1 = static_cast<boost::multiprecision::mpf_float>(x0) + (1 - amms[j].fee_amount) * static_cast<boost::multiprecision::mpf_float>(y_);
+        float_x = y0 * (1 - x0/float_x1);
+        x = static_cast<boost::multiprecision::mpz_int>(float_x);
 
         if (x < x_)
             continue;
@@ -101,8 +101,8 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
 {
     int j, num_amms;
     boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, y;
-    boost::multiprecision::mpf_float rational_y1;
-    boost::multiprecision::mpf_float rational_y;
+    boost::multiprecision::mpf_float float_y1;
+    boost::multiprecision::mpf_float float_y;
     boost::multiprecision::mpf_float temp;
     
     x_ = orders[i].buy_amount;
@@ -126,13 +126,13 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
 
         // at this point, we have found a "matching" AMM
         // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and (x0, y0) is the original pool balance
-        // Since it is a fill-or-kill sell order, we have x1 = x0 + 0.997y
+        // Since it is a fill-or-kill sell order, we have x1 = x0 + (1-fee)y
         // and y1 = y0 - x_
         // Thus, maximally exploiting the pool, we get that x1 = x0 * y0 / y1,
-        // which implies that y = 1000 * ((y0 * x0 / y1) - x0)  / 997;
-        rational_y1 = static_cast<boost::multiprecision::mpf_float>(y0 - x_);
-        rational_y = 1000 * (( static_cast<boost::multiprecision::mpf_float>(y0 * x0) / rational_y1) - static_cast<boost::multiprecision::mpf_float>(x0)) / 997;
-        y = static_cast<boost::multiprecision::mpz_int>(rational_y);
+        // which implies that y = ((y0 * x0 / y1) - x0)  / (1-fee);
+        float_y1 = static_cast<boost::multiprecision::mpf_float>(y0 - x_);
+        float_y = (( static_cast<boost::multiprecision::mpf_float>(y0 * x0) / float_y1) - static_cast<boost::multiprecision::mpf_float>(x0)) / (1 - amms[j].fee_amount);
+        y = static_cast<boost::multiprecision::mpz_int>(float_y);
 
         if (y > y_)
             continue;
@@ -274,9 +274,11 @@ void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::
     ExecutedOrder best_order;
     num_orders = orders.size();
 
-    // We only consider fill-or-kill orders, one by one
+    // We only consider fill-or-kill user orders, one by one
     for (i = 0; i < num_orders; i++) {
         if (orders[i].is_partial_fill)
+            continue;
+        if (orders[i].is_liquidity_order)
             continue;
 
         if (orders[i].is_sell_order)

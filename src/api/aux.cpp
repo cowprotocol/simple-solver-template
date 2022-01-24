@@ -24,7 +24,7 @@ void parse_json_file(std::vector<Token> &tokens, std::vector<Order> &orders, std
         boost::multiprecision::mpf_float t;
         bool normalize_priority;
 
-        normalize_priority = (i.value()["normalize_priority"] == 1) ? true : false;
+        normalize_priority = (i.value()["normalize_priority"] == 1);
         if (i.value()["external_price"].is_null())
             t = -1;
         else {
