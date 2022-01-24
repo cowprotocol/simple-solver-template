@@ -60,7 +60,7 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
         // and y1 = y0 - x
         // Thus, maximally exploiting the pool, we get that y1 = x0 * y0 / x1,
         // which implies that x = y0 * (1 - x0/x1)
-        float_x1 = static_cast<boost::multiprecision::mpf_float>(x0) + (1 - amms[j].fee_amount) * static_cast<boost::multiprecision::mpf_float>(y_);
+        float_x1 = static_cast<boost::multiprecision::mpf_float>(x0) + (1 - amms[j].fee_fraction) * static_cast<boost::multiprecision::mpf_float>(y_);
         float_x = y0 * (1 - x0/float_x1);
         x = static_cast<boost::multiprecision::mpz_int>(float_x);
 
@@ -131,7 +131,7 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
         // Thus, maximally exploiting the pool, we get that x1 = x0 * y0 / y1,
         // which implies that y = ((y0 * x0 / y1) - x0)  / (1-fee);
         float_y1 = static_cast<boost::multiprecision::mpf_float>(y0 - x_);
-        float_y = (( static_cast<boost::multiprecision::mpf_float>(y0 * x0) / float_y1) - static_cast<boost::multiprecision::mpf_float>(x0)) / (1 - amms[j].fee_amount);
+        float_y = (( static_cast<boost::multiprecision::mpf_float>(y0 * x0) / float_y1) - static_cast<boost::multiprecision::mpf_float>(x0)) / (1 - amms[j].fee_fraction);
         y = static_cast<boost::multiprecision::mpz_int>(float_y);
 
         if (y > y_)
@@ -209,7 +209,7 @@ void generate_output(std::vector<Token> &tokens, std::vector<Order> &orders, std
         nlohmann::json execution_entry = { execution_entry_contents };
         output["amms"][i]["execution"] = execution_entry;
 
-        output["amms"]["fee"] = boost::lexical_cast<std::string>(amms[amm_idx].fee_amount);
+        output["amms"]["fee"] = boost::lexical_cast<std::string>(amms[amm_idx].fee_fraction);
         output["amms"]["kind"] = "ConstantProduct";
         output["amms"]["mandatory"] = "false";
 

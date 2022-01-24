@@ -14,7 +14,7 @@ void print_cp_amm(CP_AMM &a, std::vector<Token> &_tokens)
     std::cout << "Sell amount:\t\t\t" << a.sell_reserve_amount<< '\n';
     std::cout << "Buy token index/alias:\t\t" << a.buy_token_index << " (" << _tokens[a.buy_token_index].alias << ')' << '\n';
     std::cout << "Buy amount:\t\t\t" << a.buy_reserve_amount << '\n';
-    std::cout << "Fee amount:\t\t\t" << a.fee_amount << '\n';
+    std::cout << "Fee fraction:\t\t\t" << a.fee_fraction << '\n';
     std::cout << "Cost:\n";
     std::cout << "    Cost token index/alias:\t" << a.cost_token_index << " (" << _tokens[a.cost_token_index].alias << ')' << '\n';
     std::cout << "    Cost amount:\t\t" << a.cost_amount << '\n';
