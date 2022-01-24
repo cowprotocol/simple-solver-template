@@ -29,12 +29,10 @@ class ExecutedOrder {
 
 /* 
     The main function that solves the optimization problem and returns the solution, stored in the "solution" vector
-    The algorithm is very simple, and is parameterized by an integer parameter k:
-        1. It considers all possible subsets of at most k orders;
-        2. For each such subset, it considers all possible permutations of its elements;
-        3. For each subset and permutation, it considers all possible splits of the permutation into disjoint cycles
-        4. Within each cycle, the order imposed by the permutation is respected and the remaining edges of the "cycle" are filled up by AMMs
-
+    The algorithm is very simple:
+        it considers every user fill-or-kill sell/buy order, one by one, and attempts to match it against a Uniswap v2 Pool.
+        If it succeeds in doing so, it computes the objective value of such a settlement, and 
+        among all such solutions, it returns the best one.
 */
 void solve_auction(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms);
 
