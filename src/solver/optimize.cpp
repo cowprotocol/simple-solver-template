@@ -28,18 +28,17 @@ boost::multiprecision::mpf_float custom_pow(boost::multiprecision::mpz_int x, in
 // and if so, it also checks whether it gives a strictly better objective
 void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
-   int j, num_amms;
-    boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, x;
-    boost::multiprecision::mpf_float float_x1;
-    boost::multiprecision::mpf_float float_x;
-    boost::multiprecision::mpf_float temp;
-
+    int j, num_amms;
+    boost::multiprecision::mpz_int x_, y_;
     
     x_ = orders[i].buy_amount;
     y_ = orders[i].sell_amount;
     num_amms = amms.size();
 
     for (j = 0; j < num_amms; j++) {
+        boost::multiprecision::mpz_int x0, y0, x1, y1, x;
+        boost::multiprecision::mpf_float float_x1, float_x, temp;
+
         x0 = 0;
         y0 = 0;
         if (amms[j].sell_token_index == orders[i].sell_token_index)
@@ -105,16 +104,16 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
 void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
     int j, num_amms;
-    boost::multiprecision::mpz_int x0, y0, x1, y1, x_, y_, y;
-    boost::multiprecision::mpf_float float_y1;
-    boost::multiprecision::mpf_float float_y;
-    boost::multiprecision::mpf_float temp;
+    boost::multiprecision::mpz_int x_, y_;
     
     x_ = orders[i].buy_amount;
     y_ = orders[i].sell_amount;
     num_amms = amms.size();
 
     for (j = 0; j < num_amms; j++) {
+        boost::multiprecision::mpz_int x0, y0, x1, y1, y;
+        boost::multiprecision::mpf_float float_y1, float_y, temp;
+
         x0 = 0;
         y0 = 0;
         if (amms[j].sell_token_index == orders[i].sell_token_index)
