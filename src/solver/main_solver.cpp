@@ -9,57 +9,42 @@
 #include "../api/aux.hpp"
 #include "./optimize.hpp"
 
+/****** Global variables that are defined as static in various classes *******/
 
+// static integer variable of Token class that counts number of tokens
+// in our instance
+int Token::num_tokens{0};
 
-/************************************** Global variables that are defined as static in various classes *************************************/
+// static map of class Token, that maps the address of the token to
+// a unique index
+std::map<std::string, int> Token::idx_tokens;
 
-int Token::num_tokens{ 0 };                     // static integer variable of class Token, that counts number of tokens in our instance
-std::map<std::string, int> Token::idx_tokens;   // static map of class Token, that maps the address of the token to a unique index
-
-/*******************************************************************************************************************************************/
-
-
-
+/*****************************************************************************/
 
 int main()
 {
 
-/********************************************************** VARIABLE DECLARATIONS **********************************************************/
+    /************************* VARIABLE DECLARATIONS *************************/
 
-    std::vector<Token> tokens;      // the vector containing all the tokens appearing in any order/AMM
-    std::vector<Order> orders;      // the vector containing all the "regular" orders
-    std::vector<CP_AMM> amms;       // the vector containing all the AMMs
+    std::vector<Token> tokens; // vector containing all tokens
+    std::vector<Order> orders; // vector containing all orders
+    std::vector<CP_AMM> amms;  // vector containing all AMMs
 
-/*******************************************************************************************************************************************/
+    /*************************************************************************/
 
     nlohmann::json json_file;
     std::ifstream input_file("./sample_instances/sample.json");
     input_file >> json_file;
 
     // Parsing the input
-    parse_json_file(tokens, orders, amms, Token::num_tokens, Token::idx_tokens, json_file);
+    parse_json_file(tokens, orders, amms, Token::num_tokens,
+                    Token::idx_tokens, json_file);
 
-    
-    std::cout.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
-
-
-    //for (auto &i: tokens)
-        //print_token(i);
-
-    //for (auto &i: orders)
-        //print_order(i, tokens);
-
-    //for (auto &i: amms)
-        //print_cp_amm(i, tokens);
-
+    std::cout.precision(std::numeric_limits<boost::multiprecision::
+                                                mpf_float>::digits10);
 
     // solve batch auction
     solve_auction(tokens, orders, amms);
 
-    // return solution
-
-
     return 0;
 }
-
-
