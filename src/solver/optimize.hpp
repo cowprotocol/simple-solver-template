@@ -8,15 +8,17 @@ class ExecutedOrder {
     public:
         int executed_order_idx;
         int used_amm_idx;
+        int reference_token_idx;
         boost::multiprecision::mpz_int executed_sell_amount;
         boost::multiprecision::mpz_int executed_buy_amount;
-        boost::multiprecision::mpf_float buy_token_price;
-        boost::multiprecision::mpf_float sell_token_price;
+        boost::multiprecision::mpz_int buy_token_price;
+        boost::multiprecision::mpz_int sell_token_price;
         boost::multiprecision::mpf_float objective_value;
 
         ExecutedOrder () {
             executed_order_idx = -1;
             used_amm_idx = -1;
+            reference_token_idx = -1;
             executed_sell_amount = 0;
             executed_buy_amount = 0;
             buy_token_price = 0;

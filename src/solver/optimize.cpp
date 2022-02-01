@@ -9,23 +9,11 @@
 #include "../../external_libs/json.hpp"
 
 
-// auxiliary function (used temporarily) for computing x^n using the boost library data types
-boost::multiprecision::mpf_float custom_pow(boost::multiprecision::mpz_int x, int n)
-{
-    int i;
-    boost::multiprecision::mpf_float res = 1;
-    int m = (n > 0) ? n : (-n);
-
-    for (i = 0; i < m; i++)
-        res = res * x;
-    if (n > 0)
-        return res;
-    else
-        return (1/res);
-}
-
-// main function that processes a sell order, checks if it can be matched against a single liquidity pool
-// and if so, it also checks whether it gives a strictly better objective
+// Function that processes a Fill-or-Kill user sell order and does the following:
+//      1. It checks if it can be matched against a single liquidity pool.
+//      2. If the answer to (1) is no, then it returns, otherwise it moves to (3).
+//      3. It checks whether such solution gives a strictly better objective, and if so
+//          it updates the best_order variable.
 void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
     int j, num_amms;
@@ -59,7 +47,8 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
             continue;
 
         // at this point, we have found a "matching" AMM
-        // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and (x0, y0) is the original pool balance
+        // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and 
+        // (x0, y0) is the original pool balance.
         // Since it is a fill-or-kill sell order, we have x1 = x0 + (1-fee)y_
         // and y1 = y0 - x
         // Thus, maximally exploiting the pool, we get that y1 = x0 * y0 / x1,
@@ -71,7 +60,8 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
         if (x < x_)
             continue;
         
-        // at this point, the trade can happen and so we now check if objective improves, and if so, compute the prices
+        // at this point, the trade can happen and so we check if objective improves, 
+        // and if so, compute the prices
         temp = (x - x_) * tokens[orders[i].buy_token_index].external_price  + orders[i].fee_amount * tokens[orders[i].fee_token_index].external_price - orders[i].cost_amount * tokens[orders[i].cost_token_index].external_price;
 
         if (temp > best_order.objective_value) {
@@ -82,16 +72,15 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
             best_order.executed_buy_amount = x;
             best_order.executed_sell_amount = y_;
             if (tokens[orders[i].buy_token_index].normalize_priority) {
-                best_order.buy_token_price = 1.0;
-                best_order.sell_token_price = (static_cast<boost::multiprecision::mpf_float>(x)) / (static_cast<boost::multiprecision::mpf_float>(y_));
-
+                best_order.reference_token_idx = orders[i].buy_token_index;
+                best_order.buy_token_price = static_cast<boost::multiprecision::mpz_int>(pow(10, tokens[orders[i].buy_token_index].decimals));
+                best_order.sell_token_price = (x * best_order.buy_token_price) / y_;
             }
             else {
-                best_order.sell_token_price = 1.0;
-                best_order.buy_token_price = (static_cast<boost::multiprecision::mpf_float>(y_)) / (static_cast<boost::multiprecision::mpf_float>(x));
+                best_order.reference_token_idx = orders[i].sell_token_index;
+                best_order.sell_token_price = static_cast<boost::multiprecision::mpz_int>(pow(10, tokens[orders[i].sell_token_index].decimals));
+                best_order.buy_token_price = (y_ * best_order.sell_token_price) / x;
             }
-            best_order.buy_token_price = best_order.buy_token_price * pow(10, tokens[orders[i].buy_token_index].decimals);
-            best_order.sell_token_price = best_order.sell_token_price * pow(10, tokens[orders[i].sell_token_index].decimals);
         }
     }
     return;
@@ -99,8 +88,11 @@ void process_sell_order(std::vector<Token> &tokens, std::vector<Order> &orders, 
 
 
 
-// main function that processes a buy order, checks if it can be matched against a single liquidity pool
-// and if so, it also checks whether it gives a strictly better objective
+// Function that processes a Fill-or-Kill user buy order and does the following:
+//      1. It checks if it can be matched against a single liquidity pool.
+//      2. If the answer to (1) is no, then it returns, otherwise it moves to (3).
+//      3. It checks whether such solution gives a strictly better objective, and if so
+//          it updates the best_order variable.
 void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, std::vector<CP_AMM> &amms, int i, ExecutedOrder &best_order)
 {
     int j, num_amms;
@@ -133,7 +125,8 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
             continue;
 
         // at this point, we have found a "matching" AMM
-        // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance and (x0, y0) is the original pool balance
+        // we must satisfy x1 * y1 >= x0 * y0, where (x1,y1) is the new pool balance 
+        // and (x0, y0) is the original pool balance.
         // Since it is a fill-or-kill sell order, we have x1 = x0 + (1-fee)y
         // and y1 = y0 - x_
         // Thus, maximally exploiting the pool, we get that x1 = x0 * y0 / y1,
@@ -145,7 +138,8 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
         if (y > y_)
             continue;
         
-        // at this point, the trade can happen and so we now check if objective improves, and if so, compute the prices
+        // at this point, the trade can happen and so we now check if objective improves, 
+        // and if so, compute the prices
         temp = (y_ - y) * tokens[orders[i].sell_token_index].external_price + orders[i].fee_amount * tokens[orders[i].fee_token_index].external_price - orders[i].cost_amount * tokens[orders[i].cost_token_index].external_price;
 
         if (temp > best_order.objective_value) {
@@ -156,15 +150,15 @@ void process_buy_order(std::vector<Token> &tokens, std::vector<Order> &orders, s
             best_order.executed_buy_amount = x_;
             best_order.executed_sell_amount = y;
             if (tokens[orders[i].buy_token_index].normalize_priority) {
-                best_order.buy_token_price = 1.0;
-                best_order.sell_token_price = (static_cast<boost::multiprecision::mpf_float>(x_)) / (static_cast<boost::multiprecision::mpf_float>(y));
+                best_order.reference_token_idx = orders[i].buy_token_index;
+                best_order.buy_token_price = static_cast<boost::multiprecision::mpz_int>(pow(10, tokens[orders[i].buy_token_index].decimals));
+                best_order.sell_token_price = (x_ * best_order.buy_token_price) / y;
             }
             else {
-                best_order.sell_token_price = 1.0;
-                best_order.buy_token_price = (static_cast<boost::multiprecision::mpf_float>(y)) / (static_cast<boost::multiprecision::mpf_float>(x_));
+                best_order.reference_token_idx = orders[i].sell_token_index;
+                best_order.sell_token_price = static_cast<boost::multiprecision::mpz_int>(pow(10, tokens[orders[i].sell_token_index].decimals));
+                best_order.buy_token_price = (y * best_order.sell_token_price) / x_;
             }
-            best_order.buy_token_price = best_order.buy_token_price * pow(10, tokens[orders[i].buy_token_index].decimals);
-            best_order.sell_token_price = best_order.sell_token_price * pow(10, tokens[orders[i].sell_token_index].decimals);
         }
     }
     return;
@@ -180,51 +174,36 @@ void generate_output(std::vector<Token> &tokens, std::vector<Order> &orders, std
     found = (best_order.objective_value > 0) ? true : false;
 
     output["amms"];
-    output["metadata"];
     output["orders"];
     output["prices"];
     output["ref_token"];
     output["tokens"];
 
-    output["metadata"]["has_solution"] = true;
-    output["metadata"]["result"] = "xxxx";
-
-    for (long unsigned int i = 0; i < tokens.size(); i++)
-        if (tokens[i].normalize_priority)
-            output["ref_token"] = tokens[i].name;
-
     if (found) {
+
+        // Generate "ref_token" portion of output json
+        output["ref_token"] = tokens[best_order.reference_token_idx].name;
 
         // Generate "amms" portion of output json
         int amm_idx = amms[best_order.used_amm_idx].amm_index;
         std::string i = std::to_string(amm_idx);
 
-        nlohmann::json cost_entry;
-        cost_entry["amount"] = boost::lexical_cast<std::string>(amms[amm_idx].cost_amount);
-        cost_entry["token"] = tokens[amms[amm_idx].cost_token_index].name;
-        output["amms"][i]["cost"] = cost_entry;
-
-        nlohmann::json execution_entry_contents;
-        nlohmann::json exec_plan;
-        execution_entry_contents["buy_token"] = tokens[amms[amm_idx].buy_token_index].name;
-        execution_entry_contents["sell_token"] = tokens[amms[amm_idx].sell_token_index].name;
-        execution_entry_contents["exec_buy_amount"] = "xxx";
-        execution_entry_contents["exec_sell_amount"] = "yyy";
-        
-        exec_plan["position"] = 0;
-        exec_plan["sequence"] = 0;
-        execution_entry_contents["exec_plan"] = exec_plan;
-        nlohmann::json execution_entry = { execution_entry_contents };
-        output["amms"][i]["execution"] = execution_entry;
-
-        output["amms"]["fee"] = boost::lexical_cast<std::string>(amms[amm_idx].fee_fraction);
-        output["amms"]["kind"] = "ConstantProduct";
-        output["amms"]["mandatory"] = "false";
+        output["amms"][i]["cost"]["amount"] = boost::lexical_cast<std::string>(amms[amm_idx].cost_amount);
+        output["amms"][i]["cost"]["token"] = tokens[amms[amm_idx].cost_token_index].name;
+        output["amms"][i]["execution"]["buy_token"] = tokens[amms[amm_idx].buy_token_index].name;
+        output["amms"][i]["execution"]["sell_token"] = tokens[amms[amm_idx].sell_token_index].name;
+        output["amms"][i]["execution"]["exec_buy_amount"] = boost::lexical_cast<std::string>(best_order.executed_sell_amount);
+        output["amms"][i]["execution"]["exec_sell_amount"] = boost::lexical_cast<std::string>(best_order.executed_buy_amount);
+        output["amms"][i]["execution"]["exec_plan"]["position"] = 0;
+        output["amms"][i]["execution"]["exec_plan"]["sequence"] = 0;
+        output["amms"][i]["fee"] = boost::lexical_cast<std::string>(amms[amm_idx].fee_fraction);
+        output["amms"][i]["kind"] = "ConstantProduct";
+        output["amms"][i]["mandatory"] = "false";
 
         nlohmann::json reserves;
-        reserves[tokens[amms[amm_idx].sell_token_index].name] = "asd";
-        reserves[tokens[amms[amm_idx].buy_token_index].name] = "asd";
-        output["amms"]["reserves"] = reserves;
+        reserves[tokens[amms[amm_idx].sell_token_index].name] = boost::lexical_cast<std::string>(amms[amm_idx].sell_reserve_amount);
+        reserves[tokens[amms[amm_idx].buy_token_index].name] = boost::lexical_cast<std::string>(amms[amm_idx].buy_reserve_amount);
+        output["amms"][i]["reserves"] = reserves;
 
 
         // Generate "orders" portion of output json
@@ -254,8 +233,8 @@ void generate_output(std::vector<Token> &tokens, std::vector<Order> &orders, std
         buffer << best_order.sell_token_price;
         buffer2.precision(std::numeric_limits<boost::multiprecision::mpf_float>::digits10);
         buffer2 << best_order.buy_token_price;
-        output["prices"][tokens[sell_token_idx].name] = buffer.str();//boost::lexical_cast<std::string>(best_order.sell_token_price);
-        output["prices"][tokens[buy_token_idx].name] = buffer2.str();//boost::lexical_cast<std::string>(best_order.buy_token_price);
+        output["prices"][tokens[sell_token_idx].name] = buffer.str();
+        output["prices"][tokens[buy_token_idx].name] = buffer2.str();
 
         // Generate "tokens" section of output json file
         output["tokens"][tokens[sell_token_idx].name]["alias"] = tokens[sell_token_idx].alias;
